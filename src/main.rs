@@ -5,19 +5,21 @@ use std::collections::{BinaryHeap, HashSet};
 struct Puzzle {
     state: Vec<u8>,
     empty_pos: usize,
-    g: usize, // cost to reach this state
-    h: usize, // heuristic cost to reach the goal
+    g: usize,                    // cost to reach this state
+    h: usize,                    // heuristic cost to reach the goal
+    parent: Option<Box<Puzzle>>, // pointer to parent state
 }
 
 impl Puzzle {
-    fn new(state: Vec<u8>, empty_pos: usize) -> Self {
-        let g = 0; // Starting cost
+    fn new(state: Vec<u8>, empty_pos: usize, parent: Option<Box<Puzzle>>) -> Self {
+        let g = parent.as_ref().map_or(0, |p| p.g + 1); // Update cost based on parent
         let h = Self::heuristic(&state);
         Puzzle {
             state,
             empty_pos,
             g,
             h,
+            parent,
         }
     }
 
@@ -48,7 +50,8 @@ impl Puzzle {
                 let new_pos = (new_x * 3 + new_y) as usize;
                 let mut new_state = self.state.clone();
                 new_state.swap(self.empty_pos, new_pos);
-                moves.push(Puzzle::new(new_state, new_pos));
+                let new_puzzle = Puzzle::new(new_state, new_pos, Some(Box::new(self.clone())));
+                moves.push(new_puzzle);
             }
         }
 
@@ -76,14 +79,14 @@ fn a_star(start: Puzzle) -> Option<Vec<Puzzle>> {
 
     while let Some(current) = open_set.pop() {
         if current.h == 0 {
+            // Reconstruct the solution path
             let mut solution_path = Vec::new();
-            let mut temp = current;
-            while temp.h != 0 {
+            let mut temp = &current;
+            while let Some(parent) = &temp.parent {
                 solution_path.push(temp.clone());
-                let next = temp.possible_moves();
-                temp = next.into_iter().min_by_key(|p| p.g + p.h).unwrap();
+                temp = parent;
             }
-            solution_path.push(temp);
+            solution_path.push(temp.clone()); // Add the initial state
             solution_path.reverse();
             return Some(solution_path);
         }
@@ -94,15 +97,14 @@ fn a_star(start: Puzzle) -> Option<Vec<Puzzle>> {
             if closed_set.contains(&next) {
                 continue;
             }
-            let next_g = current.g + 1;
-            let mut next_puzzle = next.clone();
-            next_puzzle.g = next_g;
+            // Clone `next` for comparisons and to push it into the open_set
+            let next_clone = next.clone();
             if !open_set
                 .iter()
-                .any(|p| p.state == next.state && p.g <= next_g)
+                .any(|p| p.state == next_clone.state && p.g <= next_clone.g)
             {
-                open_set.push(next_puzzle.clone());
-                print_puzzle(&next_puzzle);
+                open_set.push(next_clone.clone()); // Push the clone
+                                                   // print_puzzle(&next); // Use the original `next` for printing
             }
         }
     }
@@ -125,9 +127,9 @@ fn print_puzzle(puzzle: &Puzzle) {
 }
 
 fn main() {
-    let start_state = vec![1, 2, 3, 0, 8, 4, 7, 6, 5];
+    let start_state = vec![4, 7, 3, 0, 8, 1, 2, 6, 5];
     let empty_pos = start_state.iter().position(|&x| x == 0).unwrap();
-    let start_puzzle = Puzzle::new(start_state, empty_pos);
+    let start_puzzle = Puzzle::new(start_state, empty_pos, None);
 
     println!("Initial Puzzle:");
     print_puzzle(&start_puzzle);
@@ -141,3 +143,5 @@ fn main() {
         println!("No solution found!");
     }
 }
+
+
