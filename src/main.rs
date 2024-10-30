@@ -1,8 +1,10 @@
 pub mod puzzle_generator;
 
+use colored::*;
 use puzzle_generator::{make_goal, make_puzzle};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
+use std::env; // Import the colored crate
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Puzzle {
@@ -142,10 +144,85 @@ fn print_puzzle(puzzle: &Puzzle) {
     println!();
 }
 
+fn print_help(program_name: &str) {
+    println!("{}", "Usage:".bold().cyan());
+    println!("{} <size> [solvable] [iterations]", program_name.green());
+    println!();
+    println!("{}", "Arguments:".bold().cyan());
+    println!(
+        "  {}       : Required. The size of the puzzle (a valid number).",
+        "<size>".blue()
+    );
+    println!(
+        "  {}   : Optional. Set to 'true' or 'false'. Defaults to 'true'.",
+        "[solvable]".blue()
+    );
+    println!(
+        "  {}  : Optional. The number of iterations. Defaults to '20'.",
+        "[iterations]".blue()
+    );
+    println!();
+    println!("{}", "Example usage:".bold().cyan());
+    println!(
+        "  {} 5                : Create a 5x5 solvable puzzle with 20 iterations.",
+        program_name.green()
+    );
+    println!(
+        "  {} 4 false         : Create a 4x4 unsolvable puzzle with 20 iterations.",
+        program_name.green()
+    );
+    println!(
+        "  {} 6 true 30       : Create a 6x6 solvable puzzle with 30 iterations.",
+        program_name.green()
+    );
+}
+
 fn main() {
-    let size = 3; // Change to desired size (2, 3, 4, etc.)
-    let solvable = true; // Set to true for generating a solvable puzzle
-    let iterations = 20; // Number of random moves to shuffle the goal state
+    let args: Vec<String> = env::args().collect();
+
+    // Check if no arguments are provided
+    if args.len() < 2 {
+        print_help(&args[0]); // Show help if no arguments are given
+        return;
+    }
+
+    // Check if help is requested
+    if args.len() > 1 && (args[1] == "--help" || args[1] == "-h") {
+        print_help(&args[0]);
+        return;
+    }
+
+    // Default values
+    let default_solvable = true;
+    let default_iterations = 20;
+
+    // Initialize variables
+    let mut size: Option<usize> = None;
+    let mut solvable = default_solvable; // Default to true
+    let mut iterations = default_iterations; // Default to 20
+
+    // Parse arguments
+    for arg in &args[1..] {
+        match arg.parse::<usize>() {
+            Ok(num) => {
+                if size.is_none() {
+                    size = Some(num); // Set size if not already set
+                } else {
+                    iterations = num; // Update iterations if size is already set
+                }
+            }
+            Err(_) => {
+                if arg == "true" {
+                    solvable = true;
+                } else if arg == "false" {
+                    solvable = false;
+                }
+            }
+        }
+    }
+
+    // Ensure size is provided
+    let size = size.expect("Please provide a valid number for size.");
 
     // Generate the goal state
     let goal_state = make_goal(size);

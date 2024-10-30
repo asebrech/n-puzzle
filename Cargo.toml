@@ -12,3 +12,4 @@ default-run = "n_puzzle_solver"
 
 [dependencies]
 rand = "0.8"
+colored = "2.0" # Add this line
