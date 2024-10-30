@@ -5,11 +5,6 @@ edition = "2021"
 
 default-run = "n_puzzle_solver"
 
-# [[bin]]
-# name = "npuzzle_gen"
-# path = "src/bin/npuzzle_gen.rs"
-
-
 [dependencies]
 rand = "0.8"
 colored = "2.0" # Add this line

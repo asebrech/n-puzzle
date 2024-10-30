@@ -1,3 +1,4 @@
+use colored::*;
 use rand::seq::SliceRandom;
 
 pub fn make_puzzle(s: usize, solvable: bool, iterations: usize) -> Vec<usize> {
@@ -78,4 +79,37 @@ pub fn make_goal(s: usize) -> Vec<usize> {
     }
 
     puzzle.iter().map(|&x| x as usize).collect()
+}
+
+pub fn print_help(program_name: &str) {
+    println!("{}", "Usage:".bold().cyan());
+    println!("{} <size> [solvable] [iterations]", program_name.green());
+    println!();
+    println!("{}", "Arguments:".bold().cyan());
+    println!(
+        "  {}       : Required. The size of the puzzle (a valid number).",
+        "<size>".blue()
+    );
+    println!(
+        "  {}   : Optional. Set to 'true' or 'false'. Defaults to 'true'.",
+        "[solvable]".blue()
+    );
+    println!(
+        "  {}  : Optional. The number of iterations. Defaults to '20'.",
+        "[iterations]".blue()
+    );
+    println!();
+    println!("{}", "Example usage:".bold().cyan());
+    println!(
+        "  {} 5                : Create a 5x5 solvable puzzle with 20 iterations.",
+        program_name.green()
+    );
+    println!(
+        "  {} 4 false         : Create a 4x4 unsolvable puzzle with 20 iterations.",
+        program_name.green()
+    );
+    println!(
+        "  {} 6 true 30       : Create a 6x6 solvable puzzle with 30 iterations.",
+        program_name.green()
+    );
 }
