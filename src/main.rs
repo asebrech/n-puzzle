@@ -24,38 +24,43 @@ impl Puzzle {
     }
 
     fn heuristic(state: &[u8]) -> usize {
-        // Snake pattern heuristic
         let goal = [1, 2, 3, 8, 0, 4, 7, 6, 5];
-        let mut h = 0;
-        for (i, &value) in state.iter().enumerate() {
-            if value != 0 {
+        state
+            .iter()
+            .enumerate()
+            .filter(|(_, &value)| value != 0)
+            .map(|(i, &value)| {
                 let goal_pos = goal.iter().position(|&x| x == value).unwrap();
                 let row_diff = (i / 3) as isize - (goal_pos / 3) as isize;
                 let col_diff = (i % 3) as isize - (goal_pos % 3) as isize;
-                h += row_diff.unsigned_abs() + col_diff.unsigned_abs();
-            }
-        }
-        h
+                row_diff.unsigned_abs() + col_diff.unsigned_abs()
+            })
+            .sum()
     }
 
     fn possible_moves(&self) -> Vec<Puzzle> {
-        let mut moves = Vec::new();
+        let directions = [(1, 0), (-1, 0), (0, 1), (0, -1)];
         let (x, y) = (self.empty_pos / 3, self.empty_pos % 3);
-        let directions: [(isize, isize); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
-        for (dx, dy) in &directions {
-            let new_x = x as isize + dx;
-            let new_y = y as isize + dy;
-            if (0..3).contains(&new_x) && (0..3).contains(&new_y) {
-                let new_pos = (new_x * 3 + new_y) as usize;
-                let mut new_state = self.state.clone();
-                new_state.swap(self.empty_pos, new_pos);
-                let new_puzzle = Puzzle::new(new_state, new_pos, Some(Box::new(self.clone())));
-                moves.push(new_puzzle);
-            }
-        }
-
-        moves
+        directions
+            .iter()
+            .filter_map(|(dx, dy)| {
+                let new_x = x as isize + dx;
+                let new_y = y as isize + dy;
+                if (0..3).contains(&new_x) && (0..3).contains(&new_y) {
+                    let new_pos = (new_x * 3 + new_y) as usize;
+                    let mut new_state = self.state.clone();
+                    new_state.swap(self.empty_pos, new_pos);
+                    Some(Puzzle::new(
+                        new_state,
+                        new_pos,
+                        Some(Box::new(self.clone())),
+                    ))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
 
@@ -74,51 +79,46 @@ impl PartialOrd for Puzzle {
 fn a_star(start: Puzzle) -> Option<Vec<Puzzle>> {
     let mut open_set = BinaryHeap::new();
     let mut closed_set = HashSet::new();
-
     open_set.push(start);
 
     while let Some(current) = open_set.pop() {
         if current.h == 0 {
-            // Reconstruct the solution path
-            let mut solution_path = Vec::new();
-            let mut temp = &current;
-            while let Some(parent) = &temp.parent {
-                solution_path.push(temp.clone());
-                temp = parent;
-            }
-            solution_path.push(temp.clone()); // Add the initial state
-            solution_path.reverse();
-            return Some(solution_path);
+            return Some(reconstruct_path(&current));
         }
 
         closed_set.insert(current.clone());
 
         for next in current.possible_moves() {
-            if closed_set.contains(&next) {
-                continue;
-            }
-            // Clone `next` for comparisons and to push it into the open_set
-            let next_clone = next.clone();
-            if !open_set
-                .iter()
-                .any(|p| p.state == next_clone.state && p.g <= next_clone.g)
+            if !closed_set.contains(&next)
+                && !open_set
+                    .iter()
+                    .any(|p| p.state == next.state && p.g <= next.g)
             {
-                open_set.push(next_clone.clone()); // Push the clone
-                                                   // print_puzzle(&next); // Use the original `next` for printing
+                open_set.push(next);
             }
         }
     }
     None
 }
 
+fn reconstruct_path(goal: &Puzzle) -> Vec<Puzzle> {
+    let mut path = vec![goal.clone()];
+    let mut current = goal;
+    while let Some(parent) = &current.parent {
+        path.push((**parent).clone());
+        current = parent;
+    }
+    path.reverse();
+    path
+}
+
 fn print_puzzle(puzzle: &Puzzle) {
     for i in 0..3 {
         for j in 0..3 {
-            let value = puzzle.state[i * 3 + j];
-            if value == 0 {
+            if puzzle.state[i * 3 + j] == 0 {
                 print!("   ");
             } else {
-                print!("{:2} ", value);
+                print!("{:2} ", puzzle.state[i * 3 + j]);
             }
         }
         println!();
@@ -143,5 +143,4 @@ fn main() {
         println!("No solution found!");
     }
 }
-
 
