@@ -130,7 +130,16 @@ fn print_puzzle(puzzle: &Puzzle) {
 }
 
 fn main() {
-    let start_state = vec![4, 7, 3, 0, 8, 1, 2, 6, 5];
+    let size = 3; // 3x3 puzzle
+    let solvable = true; // Set to true for generating a solvable puzzle
+    let iterations = 20; // Number of random moves to shuffle the goal state
+
+    // Generate the start state using make_puzzle
+    let start_state = make_puzzle(size, solvable, iterations);
+
+    // Convert start_state from Vec<usize> to Vec<u8> to match Puzzle struct
+    let start_state: Vec<u8> = start_state.into_iter().map(|x| x as u8).collect();
+
     let empty_pos = start_state.iter().position(|&x| x == 0).unwrap();
     let start_puzzle = Puzzle::new(start_state, empty_pos, None);
 
@@ -146,4 +155,5 @@ fn main() {
         println!("No solution found!");
     }
 }
+
 
