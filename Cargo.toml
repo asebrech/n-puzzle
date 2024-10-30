@@ -3,5 +3,12 @@ name = "n_puzzle_solver"
 version = "0.1.0"
 edition = "2021"
 
+default-run = "n_puzzle_solver"
+
+# [[bin]]
+# name = "npuzzle_gen"
+# path = "src/bin/npuzzle_gen.rs"
+
+
 [dependencies]
 rand = "0.8"

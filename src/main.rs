@@ -1,3 +1,6 @@
+pub mod puzzle_generator;
+
+use puzzle_generator::{make_goal, make_puzzle};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
 
